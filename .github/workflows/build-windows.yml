@@ -1,0 +1,187 @@
+name: 🪟 Build Windows Qt Application
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  QT_VERSION: 6.9.0
+  CMAKE_VERSION: 3.27.1
+  BUILD_TYPE: Release
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    
+    strategy:
+      matrix:
+        arch: [x64]
+        qt_version: [6.9.0]
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: 🔧 Setup MSVC
+      uses: microsoft/setup-msbuild@v1.3
+      with:
+        vs-version: '17.0'
+    
+    - name: 📦 Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ matrix.qt_version }}
+        host: windows
+        target: desktop
+        arch: win64_msvc2022_64
+        modules: 'qtbase qttools'
+        cache: true
+        cache-key-prefix: 'install-qt-action'
+    
+    - name: 🔍 Verify Qt Installation
+      run: |
+        qmake --version
+        where qmake
+        echo "Qt installation path: ${{ env.Qt6_DIR }}"
+        echo "CMAKE_PREFIX_PATH: $env:CMAKE_PREFIX_PATH"
+    
+    - name: 🔧 Setup CMake
+      uses: jwlawson/actions-setup-cmake@v1.14
+      with:
+        cmake-version: ${{ env.CMAKE_VERSION }}
+    
+    - name: 🔍 Verify Build Environment
+      run: |
+        cmake --version
+        cl
+        echo "Build environment ready"
+    
+    - name: 📁 Create Build Directory
+      run: |
+        mkdir build
+        cd build
+    
+    - name: ⚙️ Configure CMake
+      run: |
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64 `
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+          -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" `
+          -DQt6_DIR="${{ env.Qt6_DIR }}"
+    
+    - name: 🔨 Build Application
+      run: |
+        cd build
+        cmake --build . --config ${{ env.BUILD_TYPE }} --parallel
+    
+    - name: 📦 Deploy Qt Libraries
+      run: |
+        cd build/${{ env.BUILD_TYPE }}
+        windeployqt MyApp.exe --qmldir ../../ --no-translations --no-system-d3d-compiler --no-opengl-sw
+        
+        # 检查生成的文件
+        echo "Generated files:"
+        ls -la
+    
+    - name: 📊 Check Application
+      run: |
+        cd build/${{ env.BUILD_TYPE }}
+        if (Test-Path "MyApp.exe") {
+          echo "✅ Application built successfully"
+          $size = (Get-Item "MyApp.exe").Length
+          echo "📊 File size: $size bytes"
+        } else {
+          echo "❌ Application not found"
+          exit 1
+        }
+    
+    - name: 📦 Package Application
+      run: |
+        cd build/${{ env.BUILD_TYPE }}
+        
+        # 创建发布目录
+        mkdir "../../release"
+        
+        # 复制所有必需文件
+        Copy-Item -Recurse -Force . "../../release/"
+        
+        # 创建版本信息文件
+        $version = if ($env:GITHUB_REF -match "refs/tags/(.*)") { $matches[1] } else { "dev-$($env:GITHUB_SHA.Substring(0,7))" }
+        echo "Version: $version" > "../../release/VERSION.txt"
+        echo "Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" >> "../../release/VERSION.txt"
+        echo "Commit: $env:GITHUB_SHA" >> "../../release/VERSION.txt"
+        
+        # 创建启动脚本
+        @"
+        @echo off
+        echo 🚀 启动 Qt Shadcn/UI 认证界面
+        echo 版本: $version
+        echo.
+        MyApp.exe
+        "@ > "../../release/启动程序.bat"
+    
+    - name: 🗜️ Create Archive
+      run: |
+        $version = if ($env:GITHUB_REF -match "refs/tags/(.*)") { $matches[1] } else { "dev-$($env:GITHUB_SHA.Substring(0,7))" }
+        $archiveName = "QtShadcnAuth-Windows-x64-$version.zip"
+        
+        Compress-Archive -Path "release/*" -DestinationPath $archiveName
+        
+        echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+    
+    - name: 📤 Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: QtShadcnAuth-Windows-x64-${{ env.VERSION }}
+        path: ${{ env.ARCHIVE_NAME }}
+        retention-days: 30
+    
+    - name: 🚀 Upload to Release
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ${{ env.ARCHIVE_NAME }}
+        asset_name: ${{ env.ARCHIVE_NAME }}
+        asset_content_type: application/zip
+
+  # 构建信息汇总
+  build-summary:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📋 Build Summary
+      run: |
+        echo "## 🎯 构建结果" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.build-windows.result }}" == "success" ]; then
+          echo "✅ **Windows 构建成功**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 Qt Shadcn/UI 认证界面已成功编译！" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **下载地址**: 在 Actions 页面的 Artifacts 中下载" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Windows 构建失败**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "请检查构建日志获取详细错误信息。" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 构建信息" >> $GITHUB_STEP_SUMMARY
+        echo "- **Qt 版本**: ${{ env.QT_VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **CMake 版本**: ${{ env.CMAKE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **构建类型**: ${{ env.BUILD_TYPE }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **目标平台**: Windows x64" >> $GITHUB_STEP_SUMMARY
+        echo "- **编译器**: MSVC 2022" >> $GITHUB_STEP_SUMMARY
