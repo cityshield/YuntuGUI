@@ -1,0 +1,156 @@
+name: 🪟 Simple MSVC Build (No Compiler Check)
+
+on:
+  workflow_dispatch:  # 仅手动触发
+  push:
+    branches: [ main ]
+
+jobs:
+  build-simple-msvc:
+    runs-on: windows-2022
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup Visual Studio 2022
+      uses: microsoft/setup-msbuild@v1.3
+      with:
+        vs-version: '17.0'
+    
+    - name: 📦 Install Qt 6.5.3
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.3'
+        host: windows
+        target: desktop
+        arch: win64_msvc2019_64
+        modules: ''
+        cache: true
+    
+    - name: 🔧 Install CMake
+      uses: jwlawson/actions-setup-cmake@v1.14
+      with:
+        cmake-version: '3.21.0'
+    
+    - name: 🔍 Simple Environment Check
+      run: |
+        echo "=== 简单环境检查 ==="
+        echo "Qt 路径: $env:Qt6_DIR"
+        echo "CMake 版本:"
+        cmake --version
+        echo "qmake 版本:"
+        qmake --version
+        echo "✅ 环境检查完成，跳过编译器检查"
+    
+    - name: 📁 Create Build Directory
+      run: mkdir build
+    
+    - name: ⚙️ Configure CMake (Simple)
+      run: |
+        cd build
+        echo "=== 配置 CMake (简单模式) ==="
+        echo "Qt 路径: $env:Qt6_DIR"
+        
+        # 使用简单的 CMake 配置，让 CMake 自动找到编译器
+        cmake .. -G "Visual Studio 17 2022" -A x64 `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+          -DQt6_DIR="$env:Qt6_DIR"
+        
+        echo "=== CMake 配置完成 ==="
+    
+    - name: 🔨 Build Application (Simple)
+      run: |
+        cd build
+        echo "=== 开始构建 (简单模式) ==="
+        # 使用 MSBuild 直接构建，避免编译器检查问题
+        msbuild YuntuGUI.sln /p:Configuration=Release /p:Platform=x64 /verbosity:normal
+        echo "=== 构建完成 ==="
+    
+    - name: 🔍 Check Build Result
+      run: |
+        echo "=== 检查构建结果 ==="
+        if (Test-Path "build/Release/YuntuGUI.exe") {
+          echo "✅ 构建成功！找到 YuntuGUI.exe"
+          $size = (Get-Item "build/Release/YuntuGUI.exe").Length
+          echo "📊 文件大小: $([math]::Round($size / 1MB, 2)) MB"
+        } else {
+          echo "❌ 构建失败，找不到 YuntuGUI.exe"
+          echo "=== 构建目录内容 ==="
+          Get-ChildItem -Recurse build/ | Select-Object Name, Length
+          echo "=== Release 目录内容 ==="
+          if (Test-Path "build/Release") {
+            Get-ChildItem build/Release/ | Select-Object Name, Length
+          } else {
+            echo "Release 目录不存在"
+          }
+        }
+    
+    - name: 📦 Package Application
+      run: |
+        if (Test-Path "build/Release/YuntuGUI.exe") {
+          echo "=== 打包应用程序 ==="
+          mkdir package
+          Copy-Item "build/Release/YuntuGUI.exe" "package/"
+          
+          # 创建说明文件
+          @"
+          YuntuGUI - 简单 MSVC 构建
+          
+          构建时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+          提交: $env:GITHUB_SHA
+          编译器: MSVC 2022 (自动检测)
+          Qt 版本: 6.5.3
+          
+          运行说明:
+          1. 双击 YuntuGUI.exe 启动程序
+          2. 如果提示缺少 DLL，请安装 Visual C++ Redistributable
+          
+          系统要求:
+          - Windows 10 或更高版本
+          - Visual C++ Redistributable 2019-2022
+          "@ > "package/README.txt"
+          
+          # 打包
+          Compress-Archive -Path "package/*" -DestinationPath "YuntuGUI-Simple-MSVC.zip"
+          echo "✅ 打包完成: YuntuGUI-Simple-MSVC.zip"
+        } else {
+          echo "❌ 构建失败，无法打包"
+          exit 1
+        }
+    
+    - name: 📤 Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: YuntuGUI-Simple-MSVC
+        path: YuntuGUI-Simple-MSVC.zip
+        retention-days: 7
+    
+    - name: 📋 Build Report
+      if: always()
+      run: |
+        echo "## 🎯 简单 MSVC 构建报告" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        
+        if (Test-Path "build/Release/YuntuGUI.exe") {
+          echo "✅ **简单 MSVC 构建成功**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "🎉 **YuntuGUI 简单 MSVC 版本构建完成！**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "📦 **下载**: 在 Artifacts 中下载 YuntuGUI-Simple-MSVC.zip" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "🔧 **构建特点**: 跳过编译器检查，使用 MSBuild 直接构建" >> $env:GITHUB_STEP_SUMMARY
+        } else {
+          echo "❌ **简单 MSVC 构建失败**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "请检查构建日志获取详细信息。" >> $env:GITHUB_STEP_SUMMARY
+        }
+        
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 🔧 简单 MSVC 构建配置" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 编译器: MSVC 2022 (自动检测，无手动检查)" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 构建工具: MSBuild (直接调用)" >> $env:GITHUB_STEP_SUMMARY
+        echo "- Qt: 6.5.3" >> $env:GITHUB_STEP_SUMMARY
+        echo "- CMake: 3.21.0" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 平台: Windows x64" >> $env:GITHUB_STEP_SUMMARY
