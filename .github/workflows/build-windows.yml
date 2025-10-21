@@ -40,7 +40,7 @@ jobs:
         host: windows
         target: desktop
         arch: win64_msvc2022_64
-        modules: 'qtbase qttools'
+        modules: ''
         cache: true
         cache-key-prefix: 'install-qt-action'
     
