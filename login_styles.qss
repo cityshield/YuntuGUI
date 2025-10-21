@@ -1,0 +1,312 @@
+/* Qt Shadcn/UI 风格样式表 - 登录页面 */
+
+/* 全局样式 */
+QWidget {
+    font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+    color: #0f172a;
+    background-color: #ffffff;
+}
+
+/* 主窗口 */
+#MainWindow {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+/* 左侧装饰区域 */
+#LeftPanel {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                stop:0 #f8fafc, stop:1 #f1f5f9);
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-right: 1px solid #e2e8f0;
+}
+
+/* 右侧表单区域 */
+#RightPanel {
+    background-color: #ffffff;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    padding: 48px 40px;
+}
+
+/* 标题样式 */
+#TitleLabel {
+    font-size: 24px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+/* 副标题样式 */
+#SubtitleLabel {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 32px;
+}
+
+/* 输入框样式 */
+QLineEdit {
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: #ffffff;
+    selection-background-color: #3b82f6;
+    min-height: 20px;
+}
+
+QLineEdit:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+
+QLineEdit:hover {
+    border-color: #cbd5e1;
+}
+
+QLineEdit::placeholder {
+    color: #94a3b8;
+}
+
+/* 输入框标签 */
+#InputLabel {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+/* 主要按钮样式 */
+#PrimaryButton {
+    background-color: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 44px;
+}
+
+#PrimaryButton:hover {
+    background-color: #1e293b;
+}
+
+#PrimaryButton:pressed {
+    background-color: #334155;
+}
+
+#PrimaryButton:disabled {
+    background-color: #e2e8f0;
+    color: #94a3b8;
+}
+
+/* 次要按钮样式 */
+#SecondaryButton {
+    background-color: #ffffff;
+    color: #374151;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 44px;
+}
+
+#SecondaryButton:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+#SecondaryButton:pressed {
+    background-color: #f1f5f9;
+}
+
+/* 验证码按钮样式 */
+#CodeButton {
+    background-color: #ffffff;
+    color: #3b82f6;
+    border: 2px solid #3b82f6;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 100px;
+    min-height: 44px;
+}
+
+#CodeButton:hover {
+    background-color: #eff6ff;
+}
+
+#CodeButton:pressed {
+    background-color: #dbeafe;
+}
+
+#CodeButton:disabled {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+}
+
+/* 微信登录按钮 */
+#WeChatButton {
+    background-color: #07c160;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 44px;
+}
+
+#WeChatButton:hover {
+    background-color: #06ad56;
+}
+
+#WeChatButton:pressed {
+    background-color: #059649;
+}
+
+/* 分割线样式 */
+#DividerLine {
+    background-color: #e2e8f0;
+    border: none;
+    height: 1px;
+    margin: 24px 0;
+}
+
+#DividerText {
+    color: #64748b;
+    font-size: 12px;
+    background-color: #ffffff;
+    padding: 0 16px;
+}
+
+/* 链接文字样式 */
+#LinkLabel {
+    color: #3b82f6;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+#LinkLabel:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+/* 错误提示样式 */
+#ErrorLabel {
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* 成功提示样式 */
+#SuccessLabel {
+    color: #10b981;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* 品牌 Logo 区域 */
+#LogoLabel {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+}
+
+#WelcomeLabel {
+    font-size: 18px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+#DescriptionLabel {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+/* 二维码区域 */
+#QRCodeFrame {
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+#QRCodeLabel {
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+/* 输入框组合样式 */
+#PhoneInputGroup, #CodeInputGroup {
+    margin-bottom: 16px;
+}
+
+/* 表单容器 */
+#FormContainer {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* 按钮组 */
+#ButtonGroup {
+    margin-top: 24px;
+}
+
+/* 页面切换区域 */
+#SwitchArea {
+    text-align: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* 自定义标题栏 */
+#TitleBar {
+    background-color: #ffffff;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    min-height: 30px;
+}
+
+#TitleBarLabel {
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+#CloseButton, #MinimizeButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #64748b;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+#CloseButton:hover {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+
+#MinimizeButton:hover {
+    background-color: #f1f5f9;
+    color: #374151;
+}
+

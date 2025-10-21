@@ -1,0 +1,13 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/styles">
+        <file>login_styles.qss</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <!-- 这里可以添加图标文件 -->
+    </qresource>
+    <qresource prefix="/images">
+        <!-- 这里可以添加图片文件 -->
+    </qresource>
+</RCC>
+
