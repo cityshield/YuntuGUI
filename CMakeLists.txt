@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)  # Qt 6.9 推荐版本
 
-project(QtShadcnAuth VERSION 1.0.0 LANGUAGES CXX)
+project(YuntuGUI VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -58,7 +58,7 @@ if(WIN32)
     # 设置 Windows 图标和版本信息
     set_target_properties(${PROJECT_NAME} PROPERTIES
         WIN32_EXECUTABLE TRUE
-        OUTPUT_NAME "MyApp"
+        OUTPUT_NAME "YuntuGUI"
     )
     
     # 如果是 Release 模式，隐藏控制台窗口

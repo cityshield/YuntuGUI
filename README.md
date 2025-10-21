@@ -1,7 +1,7 @@
 # 🎨 Qt Shadcn/UI 认证界面
 
-[![Build Windows](https://github.com/YOUR_USERNAME/qt-shadcn-design/actions/workflows/build-windows.yml/badge.svg)](https://github.com/YOUR_USERNAME/qt-shadcn-design/actions/workflows/build-windows.yml)
-[![Build Qt 6.5](https://github.com/YOUR_USERNAME/qt-shadcn-design/actions/workflows/build-qt6.5.yml/badge.svg)](https://github.com/YOUR_USERNAME/qt-shadcn-design/actions/workflows/build-qt6.5.yml)
+[![Build Windows](https://github.com/cityshield/YuntuGUI/actions/workflows/build-windows.yml/badge.svg)](https://github.com/cityshield/YuntuGUI/actions/workflows/build-windows.yml)
+[![Build Qt 6.5](https://github.com/cityshield/YuntuGUI/actions/workflows/build-qt6.5.yml/badge.svg)](https://github.com/cityshield/YuntuGUI/actions/workflows/build-qt6.5.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 基于 **Shadcn/UI** 设计风格的现代化 Qt Windows 桌面应用认证界面，支持手机号登录、短信验证码和微信扫码登录。
@@ -52,7 +52,7 @@
 
 ### 📦 下载预编译版本 (推荐)
 
-1. 访问 [Releases](https://github.com/YOUR_USERNAME/qt-shadcn-design/releases) 页面
+1. 访问 [Releases](https://github.com/cityshield/YuntuGUI/releases) 页面
 2. 下载最新的 `QtShadcnAuth-Windows-x64-*.zip`
 3. 解压后双击 `MyApp.exe` 运行
 
@@ -60,7 +60,7 @@
 
 如果没有 Release 版本，可以从 GitHub Actions 下载自动构建的版本：
 
-1. 访问 [Actions](https://github.com/YOUR_USERNAME/qt-shadcn-design/actions) 页面
+1. 访问 [Actions](https://github.com/cityshield/YuntuGUI/actions) 页面
 2. 点击最新的成功构建
 3. 在 "Artifacts" 部分下载构建产物
 
@@ -78,8 +78,8 @@
 #### 方法 1: 一键构建脚本
 ```cmd
 # 克隆项目
-git clone https://github.com/YOUR_USERNAME/qt-shadcn-design.git
-cd qt-shadcn-design
+git clone https://github.com/cityshield/YuntuGUI.git
+cd YuntuGUI
 
 # 运行构建脚本 (VS 2022 + Qt 6.9)
 修复-VS2022-Qt6.9.bat

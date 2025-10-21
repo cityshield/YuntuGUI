@@ -82,9 +82,10 @@ int main(int argc, char *argv[])
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     
     // 设置应用程序信息
-    app.setApplicationName("MyApp");
+    app.setApplicationName("YuntuGUI");
+    app.setApplicationDisplayName("云图 GUI - Shadcn/UI 认证界面");
     app.setApplicationVersion("1.0.0");
-    app.setOrganizationName("MyCompany");
+    app.setOrganizationName("CityShield");
     
     // Qt 6.9 高DPI支持
     QApplication::setHighDpiScaleFactorRoundingPolicy(
