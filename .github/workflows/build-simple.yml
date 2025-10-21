@@ -162,7 +162,7 @@ jobs:
         echo "✅ 发布包创建完成: $packageName.zip"
     
     - name: 📤 Upload Build Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: YuntuGUI-Simple-Build
         path: ${{ env.PACKAGE_NAME }}.zip

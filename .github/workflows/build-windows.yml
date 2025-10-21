@@ -137,7 +137,7 @@ jobs:
         echo "VERSION=$version" >> $env:GITHUB_ENV
     
     - name: 📤 Upload Build Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: QtShadcnAuth-Windows-x64-${{ env.VERSION }}
         path: ${{ env.ARCHIVE_NAME }}
@@ -145,14 +145,11 @@ jobs:
     
     - name: 🚀 Upload to Release
       if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ${{ env.ARCHIVE_NAME }}
-        asset_name: ${{ env.ARCHIVE_NAME }}
-        asset_content_type: application/zip
+        files: ${{ env.ARCHIVE_NAME }}
 
   # 构建信息汇总
   build-summary:
