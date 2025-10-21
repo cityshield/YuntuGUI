@@ -1,0 +1,153 @@
+name: 🪟 Minimal Qt Build (Ultra Simple)
+
+on:
+  workflow_dispatch:  # 仅手动触发
+  push:
+    branches: [ main ]
+
+jobs:
+  build-minimal:
+    runs-on: windows-2022
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup Visual Studio
+      uses: microsoft/setup-msbuild@v1.3
+      with:
+        vs-version: '17.0'
+    
+    - name: 📦 Install Qt 6.5.3 (Minimal)
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.3'
+        host: windows
+        target: desktop
+        arch: win64_msvc2019_64
+        modules: 'qtbase'
+        cache: true
+    
+    - name: 🔧 Install CMake
+      uses: jwlawson/actions-setup-cmake@v1.14
+      with:
+        cmake-version: '3.21.0'
+    
+    - name: 🔍 Debug Environment
+      run: |
+        echo "=== 环境信息 ==="
+        echo "Qt 路径: $env:Qt6_DIR"
+        echo "CMake 版本:"
+        cmake --version
+        echo "编译器:"
+        cl
+        echo "qmake 版本:"
+        qmake --version
+    
+    - name: 📁 Create Build Dir
+      run: mkdir build
+    
+    - name: ⚙️ Configure with Debug
+      run: |
+        cd build
+        echo "=== 开始 CMake 配置 ==="
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" -DQt6_DIR="$env:Qt6_DIR"
+        echo "=== CMake 配置完成 ==="
+    
+    - name: 🔨 Build with Debug
+      run: |
+        cd build
+        echo "=== 开始构建 ==="
+        cmake --build . --config Release --verbose
+        echo "=== 构建完成 ==="
+    
+    - name: 🔍 Check Build Result
+      run: |
+        echo "=== 检查构建结果 ==="
+        if (Test-Path "build/Release/YuntuGUI.exe") {
+          echo "✅ 找到 YuntuGUI.exe"
+          $size = (Get-Item "build/Release/YuntuGUI.exe").Length
+          echo "📊 文件大小: $([math]::Round($size / 1MB, 2)) MB"
+        } else {
+          echo "❌ 找不到 YuntuGUI.exe"
+          echo "=== 构建目录内容 ==="
+          Get-ChildItem -Recurse build/ | Select-Object Name, Length
+          echo "=== Release 目录内容 ==="
+          if (Test-Path "build/Release") {
+            Get-ChildItem build/Release/ | Select-Object Name, Length
+          } else {
+            echo "Release 目录不存在"
+          }
+        }
+    
+    - name: 📦 Simple Package
+      run: |
+        if (Test-Path "build/Release/YuntuGUI.exe") {
+          echo "=== 创建简单打包 ==="
+          mkdir package
+          Copy-Item "build/Release/YuntuGUI.exe" "package/"
+          
+          # 尝试部署 Qt 库
+          try {
+            cd package
+            windeployqt YuntuGUI.exe --no-translations
+            echo "✅ Qt 库部署成功"
+          } catch {
+            echo "⚠️ Qt 库部署失败，但继续打包"
+          }
+          
+          # 创建说明文件
+          @"
+          YuntuGUI - 极简构建版本
+          
+          构建时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+          提交: $env:GITHUB_SHA
+          
+          运行方法:
+          1. 双击 YuntuGUI.exe
+          2. 如果提示缺少 DLL，请安装 Visual C++ Redistributable
+          
+          注意: 这是极简构建版本，可能缺少一些依赖库
+          "@ > "package/README.txt"
+          
+          # 打包
+          Compress-Archive -Path "package/*" -DestinationPath "YuntuGUI-Minimal.zip"
+          echo "✅ 打包完成: YuntuGUI-Minimal.zip"
+        } else {
+          echo "❌ 构建失败，无法打包"
+          exit 1
+        }
+    
+    - name: 📤 Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: YuntuGUI-Minimal-Build
+        path: YuntuGUI-Minimal.zip
+        retention-days: 7
+    
+    - name: 📋 Final Report
+      if: always()
+      run: |
+        echo "## 🎯 极简构建报告" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        
+        if (Test-Path "build/Release/YuntuGUI.exe") {
+          echo "✅ **极简构建成功**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "🎉 **YuntuGUI 极简版本构建完成！**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "📦 **下载**: 在 Artifacts 中下载 YuntuGUI-Minimal.zip" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "⚠️ **注意**: 这是极简版本，可能需要额外安装 Visual C++ Redistributable" >> $env:GITHUB_STEP_SUMMARY
+        } else {
+          echo "❌ **极简构建失败**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "请检查构建日志，可能需要进一步调试。" >> $env:GITHUB_STEP_SUMMARY
+        }
+        
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 🔧 极简构建配置" >> $env:GITHUB_STEP_SUMMARY
+        echo "- Qt: 6.5.3 (仅 qtbase 模块)" >> $env:GITHUB_STEP_SUMMARY
+        echo "- CMake: 3.21.0" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 编译器: MSVC 2019" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 构建类型: 极简版 (最小依赖)" >> $env:GITHUB_STEP_SUMMARY
