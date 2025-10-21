@@ -40,7 +40,11 @@ jobs:
         echo "CMake 版本:"
         cmake --version
         echo "编译器:"
-        cl
+        if (Get-Command cl -ErrorAction SilentlyContinue) {
+          cl 2>&1 | Select-String "Microsoft"
+        } else {
+          echo "⚠️ cl 编译器未在 PATH 中找到，但构建可能仍能继续"
+        }
         echo "qmake 版本:"
         qmake --version
     
