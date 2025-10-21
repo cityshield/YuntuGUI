@@ -1,0 +1,200 @@
+name: 🪟 Simple Qt Build (Fixed)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 手动触发
+
+env:
+  QT_VERSION: 6.5.3
+  CMAKE_VERSION: 3.21.0
+  BUILD_TYPE: Release
+
+jobs:
+  build-simple:
+    runs-on: windows-2022
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup MSVC 2022
+      uses: microsoft/setup-msbuild@v1.3
+      with:
+        vs-version: '17.0'
+    
+    - name: 📦 Install Qt 6.5.3 (Stable)
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.3'
+        host: windows
+        target: desktop
+        arch: win64_msvc2019_64
+        modules: 'qtbase qttools'
+        cache: true
+    
+    - name: 🔧 Setup CMake
+      uses: jwlawson/actions-setup-cmake@v1.14
+      with:
+        cmake-version: '3.21.0'
+    
+    - name: 🔍 Verify Environment
+      run: |
+        echo "=== Qt 信息 ==="
+        qmake --version
+        echo "Qt 路径: $env:Qt6_DIR"
+        
+        echo "=== CMake 信息 ==="
+        cmake --version
+        
+        echo "=== 编译器信息 ==="
+        cl 2>&1 | Select-String "Microsoft"
+    
+    - name: 📁 Create Build Directory
+      run: |
+        mkdir build
+        cd build
+    
+    - name: ⚙️ Configure CMake (Simplified)
+      run: |
+        cd build
+        
+        # 使用简化的 CMake 配置
+        cmake .. -G "Visual Studio 17 2022" -A x64 `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+          -DQt6_DIR="$env:Qt6_DIR" `
+          -DCMAKE_CXX_STANDARD=17
+        
+        # 显示配置结果
+        echo "=== CMake 配置结果 ==="
+        cmake --build . --config Release --target help | Select-String "YuntuGUI"
+    
+    - name: 🔨 Build Application
+      run: |
+        cd build
+        cmake --build . --config Release --parallel 2
+        
+        # 检查构建结果
+        if (Test-Path "Release/YuntuGUI.exe") {
+          echo "✅ 构建成功！"
+          $size = (Get-Item "Release/YuntuGUI.exe").Length
+          echo "📊 文件大小: $([math]::Round($size / 1MB, 2)) MB"
+        } else {
+          echo "❌ 找不到 YuntuGUI.exe"
+          echo "=== 构建目录内容 ==="
+          Get-ChildItem -Recurse | Select-Object Name, Length
+          exit 1
+        }
+    
+    - name: 📦 Deploy Qt Libraries
+      run: |
+        cd build/Release
+        
+        # 检查可执行文件
+        if (Test-Path "YuntuGUI.exe") {
+          echo "🚀 开始部署 Qt 库..."
+          
+          # 使用 windeployqt 部署
+          windeployqt YuntuGUI.exe --no-translations --no-system-d3d-compiler --no-opengl-sw
+          
+          echo "✅ Qt 库部署完成"
+          
+          # 显示部署后的文件
+          echo "=== 部署后的文件 ==="
+          Get-ChildItem | Select-Object Name, Length | Sort-Object Length -Descending
+          
+        } else {
+          echo "❌ 找不到 YuntuGUI.exe，跳过部署"
+          exit 1
+        }
+    
+    - name: 📦 Package Release
+      run: |
+        # 创建发布包
+        $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+        $packageName = "YuntuGUI-Windows-Simple-$timestamp"
+        
+        mkdir $packageName
+        Copy-Item -Recurse "build/Release/*" "$packageName/"
+        
+        # 添加说明文件
+        @"
+        YuntuGUI - Qt Shadcn/UI 认证界面
+        
+        构建信息:
+        - Qt 版本: 6.5.3
+        - 构建时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+        - 提交哈希: $env:GITHUB_SHA
+        - 构建类型: 简化构建 (修复版)
+        
+        运行说明:
+        1. 双击 YuntuGUI.exe 启动程序
+        2. 界面尺寸: 900x600 像素
+        3. 支持手机号登录和微信扫码登录
+        
+        系统要求:
+        - Windows 10 或更高版本
+        - 支持的分辨率: 1024x768 或更高
+        
+        故障排除:
+        - 如果程序无法启动，请检查是否安装了 Visual C++ Redistributable
+        - 如果界面显示异常，请尝试调整系统 DPI 设置
+        "@ > "$packageName/README.txt"
+        
+        # 创建启动脚本
+        @"
+        @echo off
+        echo 🚀 启动 YuntuGUI - Qt Shadcn/UI 认证界面
+        echo 版本: 简化构建 v1.0.0
+        echo 构建时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+        echo.
+        YuntuGUI.exe
+        pause
+        "@ > "$packageName/启动程序.bat"
+        
+        # 创建压缩包
+        Compress-Archive -Path "$packageName/*" -DestinationPath "$packageName.zip"
+        
+        echo "PACKAGE_NAME=$packageName" >> $env:GITHUB_ENV
+        echo "✅ 发布包创建完成: $packageName.zip"
+    
+    - name: 📤 Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: YuntuGUI-Simple-Build
+        path: ${{ env.PACKAGE_NAME }}.zip
+        retention-days: 7
+    
+    - name: 📋 Build Summary
+      if: always()
+      run: |
+        echo "## 🎯 简化构建结果" >> $env:GITHUB_STEP_SUMMARY
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        
+        if (Test-Path "build/Release/YuntuGUI.exe") {
+          echo "✅ **构建成功**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          
+          $size = (Get-Item "build/Release/YuntuGUI.exe").Length
+          echo "📊 **应用程序大小**: $([math]::Round($size / 1MB, 2)) MB" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "🎉 **YuntuGUI 简化构建完成！**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "📦 **下载**: 在 Artifacts 中下载 $env:PACKAGE_NAME.zip" >> $env:GITHUB_STEP_SUMMARY
+          
+        } else {
+          echo "❌ **构建失败**" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "请检查构建日志获取详细信息。" >> $env:GITHUB_STEP_SUMMARY
+        }
+        
+        echo "" >> $env:GITHUB_STEP_SUMMARY
+        echo "### 📋 构建配置" >> $env:GITHUB_STEP_SUMMARY
+        echo "- Qt: 6.5.3 (稳定版)" >> $env:GITHUB_STEP_SUMMARY
+        echo "- CMake: 3.21.0" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 编译器: MSVC 2019" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 平台: Windows x64" >> $env:GITHUB_STEP_SUMMARY
+        echo "- 构建类型: 简化修复版" >> $env:GITHUB_STEP_SUMMARY
